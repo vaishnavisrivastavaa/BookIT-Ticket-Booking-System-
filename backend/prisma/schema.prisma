@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model booking_seats {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  booking_id   String     @db.ObjectId
+  show_seat_id String     @db.ObjectId
+  price        Float
+  created_at   DateTime   @default(now())
+  bookings     bookings   @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  show_seats   show_seats @relation(fields: [show_seat_id], references: [id], onDelete: Cascade)
+}
+
+model bookings {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  booking_reference String          @unique
+  customer_id       String          @db.ObjectId
+  event_id          String          @db.ObjectId
+  booking_time      DateTime
+  status            String          @default("CONFIRMED")
+  total_amount      Float
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @default(now())
+  booking_seats     booking_seats[]
+  users             users           @relation(fields: [customer_id], references: [id])
+  events            events          @relation(fields: [event_id], references: [id])
+}
+
+model event_prices {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  event_id String  @db.ObjectId
+  category String
+  price    Float
+  events   events  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, category])
+}
+
+model events {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String?
+  venue_id     String         @db.ObjectId
+  organiser_id String         @db.ObjectId
+  event_date   DateTime
+  event_time   DateTime
+  status       String         @default("UPCOMING")
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @default(now())
+  bookings     bookings[]
+  event_prices event_prices[]
+  users        users          @relation(fields: [organiser_id], references: [id])
+  venues       venues         @relation(fields: [venue_id], references: [id])
+  show_seats   show_seats[]
+  waitlist     waitlist[]
+}
+
+model roles {
+  id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  name  String  @unique
+  users users[]
+}
+
+model show_seats {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  event_id             String                 @db.ObjectId
+  venue_seat_id        String                 @db.ObjectId
+  status               String                 @default("AVAILABLE")
+  held_by_user_id      String?                @db.ObjectId
+  hold_expires_at      DateTime?
+  version              Int                    @default(0)
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @default(now())
+  booking_seats        booking_seats[]
+  events               events                 @relation(fields: [event_id], references: [id])
+  users                users?                 @relation(fields: [held_by_user_id], references: [id])
+  venue_seats          venue_seats            @relation(fields: [venue_seat_id], references: [id])
+  waitlist_offer_seats waitlist_offer_seats[]
+
+  @@unique([event_id, venue_seat_id])
+}
+
+model users {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  first_name String
+  last_name  String
+  email      String       @unique
+  password   String
+  role_id    String       @db.ObjectId
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now())
+  bookings   bookings[]
+  events     events[]
+  show_seats show_seats[]
+  roles      roles        @relation(fields: [role_id], references: [id])
+  waitlist   waitlist[]
+}
+
+model venue_seats {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  venue_id    String       @db.ObjectId
+  category    String
+  seat_label  String
+  row_number  String
+  seat_number Int
+  show_seats  show_seats[]
+  venues      venues       @relation(fields: [venue_id], references: [id], onDelete: Cascade)
+
+  @@unique([venue_id, seat_label])
+}
+
+model venues {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String        @unique
+  address     String
+  city        String
+  state       String?
+  capacity    Int           @default(0)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @default(now())
+  events      events[]
+  venue_seats venue_seats[]
+}
+
+model waitlist {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  event_id          String            @db.ObjectId
+  user_id           String            @db.ObjectId
+  seat_category     String
+  position_in_queue Int
+  status            String
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?
+  events            events            @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  users             users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  waitlist_offers   waitlist_offers[]
+
+  @@unique([event_id, user_id, seat_category])
+}
+
+model waitlist_offer_seats {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  offer_id        String          @db.ObjectId
+  show_seat_id    String          @db.ObjectId
+  waitlist_offers waitlist_offers @relation(fields: [offer_id], references: [id], onDelete: Cascade)
+  show_seats      show_seats      @relation(fields: [show_seat_id], references: [id], onDelete: Cascade)
+
+  @@unique([offer_id, show_seat_id])
+}
+
+model waitlist_offers {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  waitlist_id          String                 @db.ObjectId
+  token                String                 @unique
+  expiry_time          DateTime
+  status               String
+  created_at           DateTime               @default(now())
+  updated_at           DateTime?
+  waitlist_offer_seats waitlist_offer_seats[]
+  waitlist             waitlist               @relation(fields: [waitlist_id], references: [id], onDelete: Cascade)
+}
