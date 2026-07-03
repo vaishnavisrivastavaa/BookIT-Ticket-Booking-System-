@@ -15,7 +15,8 @@ export class SupportController {
       const subject = `New Support Query from ${email}`;
       const text = `You have received a new support query from BookIT Help Center.\n\nUser Email: ${email}\n\nQuery:\n${query}`;
       
-      await sendEmail('2k23.it2310919@gmail.com', subject, text);
+      const supportEmail = process.env.SUPPORT_EMAIL || 'support@bookit.com';
+      await sendEmail(supportEmail, subject, text);
 
       return successResponse(res, 200, 'Query sent successfully', null);
     } catch (error: any) {

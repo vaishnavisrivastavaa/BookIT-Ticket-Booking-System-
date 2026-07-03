@@ -37,8 +37,8 @@ Make sure you have installed:
 
 ### 2️⃣ Clone the Repository
 ```bash
-git clone <your-github-repo-url>
-cd ticket_booking_system
+git clone https://github.com/vaishnavisrivastavaa/BookIT-Ticket-Booking-System-.git
+cd BookIT-Ticket-Booking-System-
 ```
 
 ### 3️⃣ Setup the Backend
@@ -94,7 +94,7 @@ JWT_SECRET="your_super_secret_jwt_key_here"
 JWT_EXPIRATION="86400000" # 24 hours in ms
 
 # Email Configuration for Automated Notifications (Nodemailer)
-EMAIL_USER="2k23.it2310919@gmail.com"
+EMAIL_USER="your_email@gmail.com"
 EMAIL_PASS="your_app_password"
 ```
 
